@@ -77,6 +77,8 @@ BSTNode<T>* BSTree::iterativeSearch(T key)
 template <class T>
 BSTNode<T>* BSTree::minimum(BSTNode<T>* tree)
 {
+	if (tree == NULL)
+		return NULL;
 	BSTNode<T> *result = tree;
 
 	while (result->left != NULL)
@@ -89,6 +91,8 @@ BSTNode<T>* BSTree::minimum(BSTNode<T>* tree)
 template <class T>
 BSTNode<T>*  BSTree::maximum(BSTNode<T>* tree)
 {
+	if (tree == NULL)
+		return NULL;
 	BSTNode<T> *result = tree;
 
 	while (result->right != NULL)
@@ -101,5 +105,56 @@ BSTNode<T>*  BSTree::maximum(BSTNode<T>* tree)
 template <class T>
 void  BSTree::insert(BSTNode<T>* &tree, BSTNode<T>* z)
 {
+	if (tree == NULL)
+	{
+		cout << "插入失败" << endl;
+		return;
+	}
+	BSTNode<T> *temp = tree;
+	while (temp!=NULL)
+	{
+		if (temp->key < z->key)
+			temp = temp->right;
+		else
+			temp = temp->left;
 
+	}
+	if (temp->key < z->key)
+		temp->right = z;
+	else
+		temp->left = z;
+}
+// 删除二叉树(tree)中的结点(z)，并返回被删除的结点
+template <class T>
+BSTNode<T>* BSTree::remove(BSTNode<T>* &tree, BSTNode<T> *z)
+{
+	//BSTNode<T> *temp = NULL;
+	BSTNode<T> *successornode = NULL;
+	//temp = search(tree, z->key);
+	if (z == NULL)
+	{
+		return NULL;
+	}
+	else if (z->left == NULL || z->right == NULL)//单个子节点或者没有子节点
+	{
+		successornode = z->left || z->right;
+		if (successornode != NULL)
+		{
+			if (z->parent == NULL)
+			{
+				tree = successornode;
+				return z;
+			}
+			z->parent->left == z ? z->parent->left = successornode : z->parent->right = successornode;
+		}
+	}
+	else//双子节点
+	{
+		successornode = successor(temp);
+		z->key = successornode->key;
+		if (successornode->right)
+			z->right = successornode->right;
+		z = successornode;
+	}
+	return z;
 }
