@@ -2,7 +2,7 @@
 #define _BSTREE_H_
 #include "BSTNode.h"
 template <class  T>
-class BSTree{
+class BSTree{//二叉查找树
 	private:
 		BSTNode<T> *mRoot;    // 根结点
 	public:
@@ -82,7 +82,7 @@ void BSTree<T>::preOrder(BSTNode<T>* tree) const//前序遍历
 	{
 		cout << tree->key << " " << endl;
 		preOrder(tree->left);
-		preOrder(tree->left);
+		preOrder(tree->right);
 	}
 
 }
@@ -135,10 +135,17 @@ BSTNode<T> *BSTree<T>::search(BSTNode<T>* tree, T key) const
 	if (tree->key == key)
 		result = tree;
 	else if (tree->key < key)
-		result = search(tree->left, key);
-	else
 		result = search(tree->right, key);
+	else
+		result = search(tree->left, key);
 	return result;
+	//if (tree == NULL || tree->key == key)
+	//	return x;
+	//
+	//if (key < tree->key)
+	//	return search(tree->left, key);
+	//else
+	//	return search(tree->right, key);
 }
 template<class T>
 BSTNode<T> *BSTree<T>::search(T key)
@@ -165,6 +172,15 @@ BSTNode<T>* BSTree<T>::iterativeSearch(BSTNode<T> *tree,T key) const
 			temp = temp->left;
 	}
 	return result;
+	//while ((x != NULL) && (x->key != key))
+	//{
+	//	if (key < x->key)
+	//		x = x->left;
+	//	else
+	//		x = x->right;
+	//}
+	//
+	//return x;
 }
 template<class T>
 BSTNode<T>* BSTree<T>::iterativeSearch(T key)
@@ -240,6 +256,7 @@ void  BSTree<T>::insert(BSTNode<T>* tree, BSTNode<T>* z)
 		temp->right = z;
 	else
 		temp->left = z;
+	z->parent = temp;
 }
 // 删除二叉树(tree)中的结点(z)，并返回被删除的结点
 template <class T>
@@ -255,23 +272,20 @@ BSTNode<T>* BSTree<T>::remove(BSTNode<T>* tree, BSTNode<T> *z)
 	else if (temp->left == NULL || temp->right == NULL)//单个子节点或者没有子节点
 	{
 		successornode = temp->left ? temp->left : temp->right;
-		if (successornode != NULL)
+		if (temp->parent == NULL)
 		{
-			if (temp->parent == NULL)
-			{
-				tree = successornode;
-				return temp;
-			}
-			temp->parent->left == temp ? temp->parent->left = successornode : temp->parent->right = successornode;
+			tree = successornode;
+			return temp;
 		}
+		temp->parent->left == temp ? temp->parent->left = successornode : temp->parent->right = successornode;
+		if (successornode)
+			successornode->parent = temp->parent;
 	}
 	else//双子节点
 	{
 		successornode = successor(temp);
 		temp->key = successornode->key;
-		if (successornode->right)
-			temp->right = successornode->right;
-		temp = successornode;
+		temp = remove(successornode->parent, successornode);
 	}
 	return temp;
 }
@@ -281,8 +295,8 @@ void BSTree<T>::destroy(BSTNode<T>* &tree)
 {
 	if (tree->left != NULL)
 		destroy(tree->left)
-	else(tree->right != NULL)
-	destroy(tree->right)
+	if(tree->right != NULL)
+		destroy(tree->right)
 	delete tree;
 	tree = NULL;
 }
@@ -292,7 +306,7 @@ void BSTree<T>::print(BSTNode<T>* tree, T key, int direction)
 {
 	if (direction == 0)
 	{
-		cout << tree->key << " 's root!" << endl;
+		cout << tree->key << " is root!" << endl;
 	}
 	else if (direction == 1)
 	{
