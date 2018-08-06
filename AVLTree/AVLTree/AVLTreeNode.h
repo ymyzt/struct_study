@@ -4,10 +4,10 @@ template<class T>
 class AVLTreeNode{
 	public:
 		T key;
-		AVLTreeNode* left;
-		AVLTreeNode* right;
+		AVLTreeNode<T>* left;
+		AVLTreeNode<T>* right;
 		int height;
-		AVLTreeNode(T key, AVLTreeNode *left, AVLTreeNode *right) :
+		AVLTreeNode(T key, AVLTreeNode<T> *left, AVLTreeNode<T> *right) :
 		key(key), left(left), right(right)
 		{}
 };

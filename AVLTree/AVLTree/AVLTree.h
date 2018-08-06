@@ -10,9 +10,9 @@ public:
 	AVLTree();
 	~AVLTree();
 
-	// 获取树的高度
+	// 获取树的高度//叶子节点为0 往上加 同一深度 高度可能不同 此高非彼高
 	int height();
-	// 获取树的高度
+	// 
 	int max(int a, int b);
 
 	// 前序遍历"AVL树"
@@ -81,7 +81,6 @@ private:
 
 	// 删除AVL树(tree)中的结点(z)，并返回被删除的结点
 	AVLTreeNode<T>* remove(AVLTreeNode<T>* tree, AVLTreeNode<T>* z);
-
 	// 销毁AVL树
 	void destroy(AVLTreeNode<T>* &tree);
 
@@ -116,12 +115,29 @@ void  AVLTree<T>::postOrder(AVLTreeNode<T>* tree) const//后序遍历
 {
 	if (tree != NULL)
 	{
-		inOrder(tree->left);
-		inOrder(tree->right);
+		postOrder(tree->left);
+		postOrder(tree->right);
 		cout << tree->key << " " << endl;
 	}
 }
 
+
+
+template<class T>
+int  AVLTree<T>::height()
+{
+	return height(this->mRoot);
+}
+template<class T>
+int  AVLTree<T>::height(AVLTreeNode<T> *tree)
+{
+	return tree!=NULL ? tree->height : 0;
+}
+template<class T>
+int  AVLTree<T>::max(int a, int b)
+{
+	return a > b ? a : b;
+}
 // 前序遍历"AVL树"11
 template<class T>
 void  AVLTree<T>::preOrder()
@@ -242,64 +258,114 @@ T  AVLTree<T>::maximum()
 }
 // 将结点(z)插入到AVL树(tree)中
 template <class T>
-AVLTreeNode<T>*  AVLTree<T>::insert(AVLTreeNode<T>* tree, T key)
+AVLTreeNode<T>*  AVLTree<T>::insert(AVLTreeNode<T>* tree, T key)//因为 有返回值 parent 可以不需要 
 {
-	AVLTreeNode<T> * z = new AVLTreeNode<T>(key, NULL, NULL);
 	if (tree == NULL)
 	{
-		cout << "目标树为空!" << endl;
+		AVLTreeNode<T> * z = new AVLTreeNode<T>(key, NULL, NULL);
 		if (this->mRoot)
-			tree = this->mRoot;
+			tree = z;
 		else
+		{
+			cout << "目标树为空!" << endl;
 			tree = this->mRoot = z;
-		return;
+		}
 	}
-	AVLTreeNode<T> *temp = tree;
-	while (tree != NULL)
+	else if(tree->key < key)
 	{
-		temp = tree;
-		if (tree->key < z->key)
-			tree = tree->right;
-		else
-			tree = tree->left;
-
+		tree->right = insert(tree->right, key);
+		if (height(tree->right) - height(tree->left) == 2)
+		{
+			if (key>tree->right->key)
+				tree = rightRightRotation(tree);
+			else
+				tree = rightLeftRotation(tree);
+		}
+		
 	}
-	if (temp->key < z->key)
-		temp->right = z;
 	else
-		temp->left = z;
-	z->parent = temp;
+	{
+		tree->left = insert(tree->left, key);
+		if (height(tree->left) - height(tree->right) == 2)
+		{
+			if (key > tree->right->key)
+				tree = leftRightRotation(tree);
+			else
+				tree = leftLeftRotation(tree);
+		}
+	}
+	tree->height = max(height(tree->left), height(tree->right)) + 1; //叶子节点为0 往上加 同一深度 高度可能不同 此高非彼高
+	return tree;
 }
 // 删除AVL树(tree)中的结点(z)，并返回被删除的结点
 template <class T>
 AVLTreeNode<T>* AVLTree<T>::remove(AVLTreeNode<T>* tree, AVLTreeNode<T> *z)
 {
 	//AVLTreeNode<T> *temp = NULL;
-	AVLTreeNode<T> *successornode = NULL;
-	AVLTreeNode<T> *temp = search(tree, z->key);
-	if (temp == NULL)
+	if (tree != NULL && z != NULL)
 	{
-		return NULL;
-	}
-	else if (temp->left == NULL || temp->right == NULL)//单个子节点或者没有子节点
-	{
-		successornode = temp->left ? temp->left : temp->right;
-		if (temp->parent == NULL)
+		if (z->key < tree->key)
 		{
-			tree = successornode;
-			return temp;
+			tree->left = remove(tree->left, z);
+			if (height(tree->right) - height(tree->left) == 2)
+			{
+				AVLTreeNode<T>* r = tree->right;
+				if (height(r->left)>height(r->right))
+					tree = rightLeftRotation(tree);
+				else
+					tree = rightRightRotation(tree);
+			}
 		}
-		temp->parent->left == temp ? temp->parent->left = successornode : temp->parent->right = successornode;
-		if (successornode)
-			successornode->parent = temp->parent;
+		else if (z->key > tree->key)
+		{
+			tree->right = remove(tree->right, z);
+			if (height(tree->left) - height(tree->right) == 2)
+			{
+				AVLTreeNode<T>* r = tree->left;
+				if (height(r->right) > height(r->left))
+					tree = leftRightRotation(tree);
+				else
+					tree = leftLeftRotation(tree);
+			}
+		}
+		else
+		{
+			AVLTreeNode<T>* temp = NULL;
+			if (tree->left && tree->right)
+			{
+				if (height(tree->left) > height(tree->right))
+				{
+					temp = maximum(tree->left);
+					tree->key = temp->key;
+					tree->left = remove(tree->left, temp);
+				}
+				else
+				{
+					temp = minimum(tree->right);
+					tree->key = temp->key;
+					tree->right = remove(tree->right, temp);
+				}
+
+			}
+			else
+			{
+				temp = tree;
+				if (tree->left)
+					tree = tree->left;
+				else if (tree->right)
+					tree = tree->right;
+				else
+					tree = NULL;
+				delete temp, temp = NULL;
+				
+
+			}
+		}
+		return tree;
 	}
-	else//双子节点
-	{
-		successornode = successor(temp);
-		temp->key = successornode->key;
-		temp = remove(successornode->parent, successornode);
-	}
-	return temp;
+	else
+		return NULL;
+	
 }
 // 销毁AVL树
 template <class T>
@@ -337,7 +403,7 @@ void AVLTree<T>::print(AVLTreeNode<T>* tree, T key, int direction)
 template <class T>
 void AVLTree<T>::insert(T key)
 {
-	insert(this->mRoot, key);
+	this->mRoot = insert(this->mRoot, key);
 }
 
 // 删除结点(key为节点键值)
@@ -354,7 +420,45 @@ void AVLTree<T>::destroy()
 {
 	destroy(&(this->mRoot));
 }
+// LL：左左对应的情况(左单旋转)。
+template <class T>
+AVLTreeNode<T>* AVLTree<T>::leftLeftRotation(AVLTreeNode<T>* k2)
+{
+	AVLTreeNode<T>* k1 = k2->left;
+	k2->left = k1->right;
+	k1->right = k2;
+	k2->height = max(height(k2->left), height(k2->right)) + 1;
+	k1->height = max(height(k1->left), height(k1->right)) + 1;
+ 	return k1;
+}
 
+// RR：右右对应的情况(右单旋转)。
+template <class T>
+AVLTreeNode<T>* AVLTree<T>::rightRightRotation(AVLTreeNode<T>* k2)
+{
+	AVLTreeNode<T>* k1 = k2->right;
+	k2->right = k1->left;
+	k1->left = k2;
+	k2->height = max(height(k2->left), height(k2->right)) + 1;
+	k1->height = max(height(k1->left), height(k1->right)) + 1;
+	return k1;
+}
+
+// LR：左右对应的情况(左双旋转)。
+template <class T>
+AVLTreeNode<T>* AVLTree<T>::leftRightRotation(AVLTreeNode<T>* k2)
+{
+	k2->left = rightRightRotation(k2->left);
+	return leftLeftRotation(k2);
+}
+
+// RL：右左对应的情况(右双旋转)。
+template <class T>
+AVLTreeNode<T>* AVLTree<T>::rightLeftRotation(AVLTreeNode<T>* k2)
+{
+	k2->right = leftLeftRotation(k2->right);
+	return rightRightRotation(k2);
+}
 // 打印AVL树
 template <class T>
 void AVLTree<T>::print()
