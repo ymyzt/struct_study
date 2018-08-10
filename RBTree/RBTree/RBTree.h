@@ -42,6 +42,7 @@ public:
 	// 打印红黑树
 	void print();
 private:
+	RBTreeNode<T>* mRoot;
 	// 前序遍历"红黑树"
 	void preOrder(RBTreeNode<T>* tree) const;
 	// 中序遍历"红黑树"
@@ -60,15 +61,15 @@ private:
 	RBTreeNode<T>* maximum(RBTreeNode<T>* tree);
 
 	// 左旋
-	void LeftRotation(RBTreeNode<T>* &root, RBTreeNode<T>* x);
+	RBTreeNode<T>* LeftRotation( RBTreeNode<T>*& x);
 	// 右旋
-	void RightRotation(RBTreeNode<T>* &root, RBTreeNode<T>* y);
+	RBTreeNode<T>* RightRotation( RBTreeNode<T>*& y);
 	// 插入函数
 	void insert(RBTreeNode<T>* &root, RBTreeNode<T>* node);
 	// 插入修正函数
 	void insertFixUp(RBTreeNode<T>* &root, RBTreeNode<T>* node);
 	// 删除函数
-	void remove(RBTreeNode<T>* &root, RBTreeNode<T> *node);
+	RBTreeNode<T>* remove(RBTreeNode<T>* &root, RBTreeNode<T> *node);
 	// 删除修正函数
 	void removeFixUp(RBTreeNode<T>* &root, RBTreeNode<T> *node, RBTreeNode<T> *parent);
 
@@ -85,7 +86,7 @@ void RBTree<T>::preOrder(RBTreeNode<T>* tree) const//前序遍历
 {
 	if (tree != NULL)
 	{
-		cout << tree->key << " " << endl;
+		cout << tree->key << " color is "<<tree->color << endl;
 		preOrder(tree->left);
 		preOrder(tree->right);
 	}
@@ -215,8 +216,10 @@ T  RBTree<T>::maximum()
 }
 // 将结点(z)插入到RB树(tree)中
 template <class T>
-RBTreeNode<T>*  RBTree<T>::insert(RBTreeNode<T>* tree, RBTreeNode<T>* z)
+void  RBTree<T>::insert(RBTreeNode<T>* &tree, RBTreeNode<T>* z)
 {
+	RBTreeNode<T>* temp = tree;
+	RBTreeNode<T>* temp2 = tree;
 	if (tree == NULL)
 	{
 		if (this->mRoot)
@@ -226,28 +229,29 @@ RBTreeNode<T>*  RBTree<T>::insert(RBTreeNode<T>* tree, RBTreeNode<T>* z)
 			cout << "目标树为空!" << endl;
 			tree = this->mRoot = z;
 		}
+		temp = tree;
 	}
 	else
 	{
-		RBTreeNode<T>* temp = tree;
-		while (tree)
+		
+		while (temp)
 		{
-			temp = tree;
-			if (tree->left->key > z->key)
-				tree = tree->left;
-			else if (tree->right->key < z->key)
-				tree = tree->right;
+			temp2 = temp;
+			if (temp->key > z->key)
+				temp = temp->left;
+			else if (temp->key < z->key)
+				temp = temp->right;
 			else
 				cout << "已存在节点"<<z->key << endl;
 		}
-		if (temp->key < z->key)
-			temp->right = z;
-		else if (temp->key>z->key)
-			temp->left = z;
-		z->parent = temp;
+		if (temp2->key < z->key)
+			temp2->right = z;
+		else if (temp2->key>z->key)
+			temp2->left = z;
+		z->parent = temp2;
 	}	
-	insertFixUp(tree, z);
-	return tree;
+	insertFixUp(this->mRoot, z);
+	//return temp;
 }
 template <class T>
 void RBTree<T>::insertFixUp(RBTreeNode<T>* &tree, RBTreeNode<T> *z)
@@ -258,49 +262,69 @@ void RBTree<T>::insertFixUp(RBTreeNode<T>* &tree, RBTreeNode<T> *z)
 	}
 	else
 	{
-		while (1)
+		while (z->parent)
 		{
 			RBTreeNode<T> *z_p = z->parent;
 			RBTreeNode<T> *z_g = z_p->parent;
 			if (z_p->color != Black)
 			{
 				RBTreeNode<T>* z_u = z_p == z_g->left ? z_g->right : z_g->left;
-				if (z_u->color == Red)
+				if (z_u&&z_u->color == Red)
 				{
-					z_p->color = Red;
-					z_u->color = Red;
-					z_g->color = Black;
+					z_p->color = Black;
+					z_u->color = Black;
+					z_g->color = Red;
 					z = z_g;
-					if (z == tree)
-						break;
 				}
 				else
-				{
-					if (z == z_p->right)
 					{
-						LeftRotation(z_p);
-						z = z_p;
-					}
-					else
-					{
-						z_p->color = Black;
-						z_g->color = Red;
-						RightRotation(z_g);
-						z = z_p;
-						if (z_g == tree)
+						if (z_p == z_g->left)
 						{
-							tree = z;
-							break;
+							if (z == z_p->right)
+							{
+								LeftRotation(z_p);
+								z = z_p;
+							}
+							else
+							{
+								z_p->color = Black;
+								z_g->color = Red;
+								RightRotation(z_g);
+								z = z_p;
+							}
 						}
-							
+						else
+						{
+							if (z == z_p->right)
+							{
+								z_p->color = Black;
+								z_g->color = Red;
+								LeftRotation(z_g);
+								z = z_p;
+							}
+							else
+							{
+								RightRotation(z_p);
+								z = z_p;
+							}
+
+						}
 					}
-				}
+				
 			}
+			else
+			{
+				z = tree;
+				break;
+			}
+
 		}
+		z->color = Black;
+		tree = z;
 	}
 }
 template <class T>
-RBTreeNode<T>* RBTree<T>::remove(RBTreeNode<T>* tree, RBTreeNode<T> *z)
+RBTreeNode<T>* RBTree<T>::remove(RBTreeNode<T>* &tree, RBTreeNode<T> *z)
 {
 	//RBTreeNode<T> *temp = NULL;
 	if (tree != NULL && z != NULL)
@@ -404,7 +428,9 @@ void RBTree<T>::print(RBTreeNode<T>* tree, T key, int direction)
 template <class T>
 void RBTree<T>::insert(T key)
 {
-	this->mRoot = insert(this->mRoot, key);
+	RBTreeNode<T>* z = new RBTreeNode<T>(key, Red, NULL, NULL, NULL);
+	//this->mRoot = 
+	insert(this->mRoot, z);
 }
 
 // 删除结点(key为节点键值)
@@ -423,25 +449,31 @@ void RBTree<T>::destroy()
 }
 // LL：左左对应的情况(左单旋转)。
 template <class T>
-RBTreeNode<T>* RBTree<T>::LeftRotation(RBTreeNode<T>* k2)
+RBTreeNode<T>* RBTree<T>::LeftRotation(RBTreeNode<T>*& k2)
 {
 	RBTreeNode<T>* k1 = k2->right;
+	RBTreeNode<T>* p = k2->parent;
 	k2->right = k1->left;
-	k1->parent = k2->parent;
+	k1->parent = p;
 	k2->parent = k1;
 	k1->left = k2;
+	if (p)
+		p->left == k2 ? p->left = k1 : p->right = k1;
 	return k1;
 }
 
 // RR：右右对应的情况(右单旋转)。
 template <class T>
-RBTreeNode<T>* RBTree<T>::RightRotation(RBTreeNode<T>* k2)
+RBTreeNode<T>* RBTree<T>::RightRotation(RBTreeNode<T>*& k2)
 {
 	RBTreeNode<T>* k1 = k2->left;
+	RBTreeNode<T>* p = k2->parent;
 	k2->left = k1->right;
-	k1->parent = k2->parent;
+	k1->parent = p;
 	k2->parent = k1;
 	k1->right = k2;
+	if (p)
+		p->left == k2 ? p->left = k1 : p->right = k1;
 	return k1;
 }
 

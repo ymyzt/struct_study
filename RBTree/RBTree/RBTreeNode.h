@@ -10,7 +10,7 @@ class RBTreeNode{
 		RBTreeNode<T> *left;
 		RBTreeNode<T> *right;
 		RBTreeNode(T k, Color c, RBTreeNode<T> *p, RBTreeNode<T> *l, RBTreeNode<T> *r):
-			key(k), color(c), p(0), left(l), right(r){}
+			key(k), color(c), parent(0), left(l), right(r){}
 		
 };
 #endif
